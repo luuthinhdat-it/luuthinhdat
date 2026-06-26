@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tra cứu điểm tuyển sinh 10</title>
+
+<style>
+body{
+  font-family:Arial;
+  padding:20px;
+}
+input,button{
+  width:100%;
+  padding:12px;
+  margin:8px 0;
+}
+.card{
+  background:#f5f5f5;
+  padding:15px;
+  border-radius:10px;
+  margin-top:10px;
+}
+</style>
+</head>
+<body>
+
+<h2>Tra cứu điểm tuyển sinh lớp 10</h2>
+
+<input id="sbd" placeholder="Nhập số báo danh">
+
+<button onclick="traCuu()">
+Tra cứu
+</button>
+
+<div id="kq"></div>
+
+<script>
+
+async function traCuu(){
+
+ let sbd=document.getElementById("sbd").value;
+
+ // API của bạn
+ let url=
+ "https://your-api.onrender.com/diem?sbd="+sbd;
+
+ try{
+
+   let res=await fetch(url);
+
+   let data=await res.json();
+
+   document.getElementById("kq").innerHTML=`
+   <div class="card">
+   <b>${data.hoten}</b><br>
+   Toán: ${data.toan}<br>
+   Văn: ${data.van}<br>
+   Anh: ${data.anh}
+   </div>
+   `;
+
+ }catch(e){
+
+   document.getElementById("kq").innerHTML=
+   "Không kết nối được API";
+
+ }
+
+}
+
+</script>
+
+</body>
+</html>
