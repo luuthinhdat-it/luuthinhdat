@@ -10,14 +10,12 @@
         h2 { text-align: center; color: #0056b3; margin-bottom: 20px; }
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
         button { width: 100%; padding: 12px; background-color: #0056b3; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
-        button:hover { background-color: #004085; }
         .result-box { margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 4px; background-color: #fafafa; display: none; }
         .result-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 15px; }
         .result-row:last-child { border-bottom: none; }
         .label { font-weight: bold; color: #555; }
         .value { text-align: right; color: #000; }
         .error { color: red; text-align: center; margin-top: 15px; display: none; font-weight: bold; }
-        .loading { text-align: center; margin-top: 15px; display: none; color: #666; }
     </style>
 </head>
 <body>
@@ -27,8 +25,7 @@
     <input type="text" id="searchKey" placeholder="Nhập Số báo danh của bạn...">
     <button onclick="traCuuDiem()">Xem Kết Quả</button>
 
-    <div id="loading" class="loading">⏳ Đang kết nối dữ liệu từ Sở...</div>
-    <div id="error" class="error">❌ Không tìm thấy SBD này hoặc lỗi kết nối hệ thống!</div>
+    <div id="error" class="error">❌ Không tìm thấy Số báo danh này trong hệ thống!</div>
 
     <div id="result" class="result-box">
         <div class="result-row"><span class="label">Họ và Tên:</span> <span id="resTen" class="value" style="font-weight: bold;"></span></div>
@@ -47,52 +44,59 @@
 </div>
 
 <script>
-async function traCuuDiem() {
+// KHO DỮ LIỆU: Bạn và Kuven chỉ cần cập nhật danh sách thí sinh vào đây
+const DANH_SACH_DIEM = [
+    {
+        sbd: "120006",
+        madd: "072090001234",
+        ten: "Nguyễn Văn Hoài",
+        truong: "THCS Trần Hưng Đạo",
+        hoidong: "THPT Chuyên Hoàng Lê Kha",
+        toan: "8.5",
+        van: "7.25",
+        anh: "9.0",
+        chuyen: "8.25 (Toán Chuyên)"
+    },
+    {
+        sbd: "120007",
+        madd: "072090005678",
+        ten: "Trần Thị Mai",
+        truong: "THCS Võ Thị Sáu",
+        hoidong: "THPT Lý Thường Kiệt",
+        toan: "7.0",
+        van: "8.0",
+        anh: "6.5",
+        chuyen: "Không thi"
+    }
+];
+
+function traCuuDiem() {
     const sbd = document.getElementById("searchKey").value.trim();
     const resultBox = document.getElementById("result");
     const errorBox = document.getElementById("error");
-    const loadingBox = document.getElementById("loading");
 
     if (!sbd) {
-        alert("Vui lòng nhập Số báo danh trước khi tìm kiếm!");
+        alert("Vui lòng nhập Số báo danh!");
         return;
     }
 
-    // Ẩn các hộp thông báo cũ, hiện chữ đang tải
-    resultBox.style.display = "none";
-    errorBox.style.display = "none";
-    loadingBox.style.display = "block";
+    // Tìm kiếm trực tiếp trong file
+    const data = DANH_SACH_DIEM.find(item => item.sbd === sbd);
 
-    try {
-        // Gọi tới hàm trung gian (Serverless Function trên Vercel) đã kết nối ngầm với Sở
-        const response = await fetch(`/api/tracuu?sbd=${sbd}`);
-        const data = await response.json();
-
-        loadingBox.style.display = "none";
-
-        if (data && !data.error) {
-            errorBox.style.display = "none";
-            resultBox.style.display = "block";
-            
-            // Đổ chính xác các trường dữ liệu từ API ra màn hình điện thoại
-            // (Bạn có thể đổi tên các biến data.xxx tùy thuộc vào cấu trúc JSON thực tế trả về của Sở)
-            document.getElementById("resTen").innerText = data.hoTen || "Chưa cập nhật";
-            document.getElementById("resSBD").innerText = data.soBaoDanh || sbd;
-            document.getElementById("resMaDD").innerText = data.maDinhDanh || "Không có";
-            document.getElementById("resTruong").innerText = data.truongCu || "Chưa rõ";
-            document.getElementById("resHoiDong").innerText = data.hoiDongThi || "Chưa rõ";
-            document.getElementById("resToan").innerText = data.diemToan ?? "0";
-            document.getElementById("resVan").innerText = data.diemVan ?? "0";
-            document.getElementById("resAnh").innerText = data.diemAnh ?? "0";
-            
-            // Hiển thị điểm chuyên nếu có thi
-            document.getElementById("resChuyen").innerText = data.diemChuyen ? data.diemChuyen : "Không dự thi môn chuyên";
-        } else {
-            resultBox.style.display = "none";
-            errorBox.style.display = "block";
-        }
-    } catch (err) {
-        loadingBox.style.display = "none";
+    if (data) {
+        errorBox.style.display = "none";
+        resultBox.style.display = "block";
+        
+        document.getElementById("resTen").innerText = data.ten;
+        document.getElementById("resSBD").innerText = data.sbd;
+        document.getElementById("resMaDD").innerText = data.madd;
+        document.getElementById("resTruong").innerText = data.truong;
+        document.getElementById("resHoiDong").innerText = data.hoidong;
+        document.getElementById("resToan").innerText = data.toan;
+        document.getElementById("resVan").innerText = data.van;
+        document.getElementById("resAnh").innerText = data.anh;
+        document.getElementById("resChuyen").innerText = data.chuyen;
+    } else {
         resultBox.style.display = "none";
         errorBox.style.display = "block";
     }
