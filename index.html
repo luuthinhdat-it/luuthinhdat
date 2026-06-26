@@ -7,15 +7,17 @@
     <style>
         body { font-family: Arial, sans-serif; margin: 15px; background-color: #f4f6f9; color: #333; }
         .container { max-width: 500px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #0056b3; margin-bottom: 20px; }
+        h2 { text-align: center; color: #0056b3; margin-bottom: 20px; font-size: 22px; }
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
         button { width: 100%; padding: 12px; background-color: #0056b3; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        button:disabled { background-color: #aaa; cursor: not-allowed; }
         .result-box { margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 4px; background-color: #fafafa; display: none; }
         .result-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 15px; }
         .result-row:last-child { border-bottom: none; }
         .label { font-weight: bold; color: #555; }
         .value { text-align: right; color: #000; }
         .error { color: red; text-align: center; margin-top: 15px; display: none; font-weight: bold; }
+        .loading { color: #0056b3; text-align: center; margin-top: 15px; display: none; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -23,16 +25,15 @@
 <div class="container">
     <h2>Tra cứu điểm tuyển sinh lớp 10</h2>
     <input type="text" id="searchKey" placeholder="Nhập Số báo danh của bạn...">
-    <button onclick="traCuuDiem()">Tra cứu</button>
+    <button id="btnTraCuu" onclick="traCuuDiem()">Tra cứu</button>
 
-    <div id="error" class="error">❌ Không tìm thấy SBD này hoặc lỗi kết nối hệ thống!</div>
+    <div id="loading" class="loading">🔄 Đang vượt tường lửa kết nối đến Sở Tây Ninh, vui lòng chờ 5-10 giây...</div>
+    <div id="error" class="error">❌ Không tìm thấy SBD này hoặc hệ thống bảo mật của Sở quá cao!</div>
 
     <div id="result" class="result-box">
         <div class="result-row"><span class="label">Họ và Tên:</span> <span id="resTen" class="value" style="font-weight: bold;"></span></div>
         <div class="result-row"><span class="label">Số báo danh:</span> <span id="resSBD" class="value"></span></div>
-        <div class="result-row"><span class="label">Mã định danh:</span> <span id="resMaDD" class="value"></span></div>
         <div class="result-row"><span class="label">Trường THCS cũ:</span> <span id="resTruong" class="value"></span></div>
-        <div class="result-row"><span class="label">Hội đồng thi:</span> <span id="resHoiDong" class="value"></span></div>
         <div class="result-row"><span class="label">Điểm Toán:</span> <span id="resToan" class="value"></span></div>
         <div class="result-row"><span class="label">Điểm Ngữ Văn:</span> <span id="resVan" class="value"></span></div>
         <div class="result-row"><span class="label">Điểm Tiếng Anh:</span> <span id="resAnh" class="value"></span></div>
@@ -48,39 +49,47 @@ async function traCuuDiem() {
     const sbd = document.getElementById("searchKey").value.trim();
     const resultBox = document.getElementById("result");
     const errorBox = document.getElementById("error");
+    const loadingBox = document.getElementById("loading");
+    const btn = document.getElementById("btnTraCuu");
 
     if (!sbd) {
         alert("Vui lòng nhập Số báo danh!");
         return;
     }
 
+    // Ẩn các thông báo cũ, hiện thông báo đang tải dữ liệu
     resultBox.style.display = "none";
     errorBox.style.display = "none";
+    loadingBox.style.display = "block";
+    btn.disabled = true; // Khóa nút bấm lại tránh bấm liên tục
 
     try {
-        const response = await fetch(`/api/tracuu?sbd=${sbd}`);
-        if (!response.ok) throw new Error("Lỗi kết nối");
-        
+        const response = await fetch('/api/tracuu?sbd=' + sbd);
         const data = await response.json();
 
+        loadingBox.style.display = "none";
+        btn.disabled = false;
+
+        // Kiểm tra xem dữ liệu từ Sở trả về có đúng từ khóa không
         if (data && !data.error) {
             errorBox.style.display = "none";
             resultBox.style.display = "block";
             
-            document.getElementById("resTen").innerText = data.hoTen || data.HoTen || "Thí sinh";
+            // Tự động nhận diện mọi kiểu đặt tên biến của Sở
+            document.getElementById("resTen").innerText = data.hoTen || data.HoTen || data.fullName || "Thí sinh";
             document.getElementById("resSBD").innerText = data.soBaoDanh || data.sbd || sbd;
-            document.getElementById("resMaDD").innerText = data.maDinhDanh || "Đang cập nhật";
-            document.getElementById("resTruong").innerText = data.truongCu || "Đang cập nhật";
-            document.getElementById("resHoiDong").innerText = data.hoiDongThi || "Đang cập nhật";
-            document.getElementById("resToan").innerText = data.diemToan || data.toan || "0";
-            document.getElementById("resVan").innerText = data.diemVan || data.van || "0";
-            document.getElementById("resAnh").innerText = data.diemAnh || data.anh || "0";
+            document.getElementById("resTruong").innerText = data.truongCu || data.tenTruongThcs || "Đang cập nhật";
+            document.getElementById("resToan").innerText = data.diemToan ?? data.toan ?? "0";
+            document.getElementById("resVan").innerText = data.diemVan ?? data.van ?? "0";
+            document.getElementById("resAnh").innerText = data.diemAnh ?? data.anh ?? "0";
             document.getElementById("resChuyen").innerText = data.diemChuyen || "Không thi chuyên";
         } else {
             resultBox.style.display = "none";
             errorBox.style.display = "block";
         }
     } catch (err) {
+        loadingBox.style.display = "none";
+        btn.disabled = false;
         resultBox.style.display = "none";
         errorBox.style.display = "block";
     }
