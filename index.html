@@ -1,76 +1,4 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tra Cứu Điểm Thi Lớp 10 Tây Ninh</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 15px; background-color: #f4f6f9; color: #333; }
-        .container { max-width: 500px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #0056b3; margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
-        button { width: 100%; padding: 12px; background-color: #0056b3; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
-        .result-box { margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 4px; background-color: #fafafa; display: none; }
-        .result-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 15px; }
-        .result-row:last-child { border-bottom: none; }
-        .label { font-weight: bold; color: #555; }
-        .value { text-align: right; color: #000; }
-        .error { color: red; text-align: center; margin-top: 15px; display: none; font-weight: bold; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h2>Tuyển Sinh 10 Tây Ninh</h2>
-    <input type="text" id="searchKey" placeholder="Nhập Số báo danh của bạn...">
-    <button onclick="traCuuDiem()">Xem Kết Quả</button>
-
-    <div id="error" class="error">❌ Không tìm thấy Số báo danh này trong hệ thống!</div>
-
-    <div id="result" class="result-box">
-        <div class="result-row"><span class="label">Họ và Tên:</span> <span id="resTen" class="value" style="font-weight: bold;"></span></div>
-        <div class="result-row"><span class="label">Số báo danh:</span> <span id="resSBD" class="value"></span></div>
-        <div class="result-row"><span class="label">Mã định danh:</span> <span id="resMaDD" class="value"></span></div>
-        <div class="result-row"><span class="label">Trường THCS cũ:</span> <span id="resTruong" class="value"></span></div>
-        <div class="result-row"><span class="label">Hội đồng thi:</span> <span id="resHoiDong" class="value"></span></div>
-        <div class="result-row"><span class="label">Điểm Toán:</span> <span id="resToan" class="value"></span></div>
-        <div class="result-row"><span class="label">Điểm Ngữ Văn:</span> <span id="resVan" class="value"></span></div>
-        <div class="result-row"><span class="label">Điểm Tiếng Anh:</span> <span id="resAnh" class="value"></span></div>
-        <div class="result-row" style="background-color: #e6f3ff; margin-top: 5px; padding: 10px 5px; border-radius: 4px;">
-            <span class="label" style="color: #0056b3;">Điểm Môn Chuyên:</span> 
-            <span id="resChuyen" class="value" style="font-weight: bold; color: #0056b3;"></span>
-        </div>
-    </div>
-</div>
-
-<script>
-// KHO DỮ LIỆU: Bạn và Kuven chỉ cần cập nhật danh sách thí sinh vào đây
-const DANH_SACH_DIEM = [
-    {
-        sbd: "120006",
-        madd: "072090001234",
-        ten: "Nguyễn Văn Hoài",
-        truong: "THCS Trần Hưng Đạo",
-        hoidong: "THPT Chuyên Hoàng Lê Kha",
-        toan: "8.5",
-        van: "7.25",
-        anh: "9.0",
-        chuyen: "8.25 (Toán Chuyên)"
-    },
-    {
-        sbd: "120007",
-        madd: "072090005678",
-        ten: "Trần Thị Mai",
-        truong: "THCS Võ Thị Sáu",
-        hoidong: "THPT Lý Thường Kiệt",
-        toan: "7.0",
-        van: "8.0",
-        anh: "6.5",
-        chuyen: "Không thi"
-    }
-];
-
-function traCuuDiem() {
+async function traCuuDiem() {
     const sbd = document.getElementById("searchKey").value.trim();
     const resultBox = document.getElementById("result");
     const errorBox = document.getElementById("error");
@@ -80,28 +8,43 @@ function traCuuDiem() {
         return;
     }
 
-    // Tìm kiếm trực tiếp trong file
-    const data = DANH_SACH_DIEM.find(item => item.sbd === sbd);
+    // Ẩn bảng kết quả cũ đi trước khi tìm kiếm mới
+    resultBox.style.display = "none";
+    errorBox.style.display = "none";
 
-    if (data) {
-        errorBox.style.display = "none";
-        resultBox.style.display = "block";
+    try {
+        // GỌI ĐẾN FILE API BẠN VỪA TẠO
+        const response = await fetch(`/api/tracuu?sbd=${sbd}`);
         
-        document.getElementById("resTen").innerText = data.ten;
-        document.getElementById("resSBD").innerText = data.sbd;
-        document.getElementById("resMaDD").innerText = data.madd;
-        document.getElementById("resTruong").innerText = data.truong;
-        document.getElementById("resHoiDong").innerText = data.hoidong;
-        document.getElementById("resToan").innerText = data.toan;
-        document.getElementById("resVan").innerText = data.van;
-        document.getElementById("resAnh").innerText = data.anh;
-        document.getElementById("resChuyen").innerText = data.chuyen;
-    } else {
+        if (!response.ok) {
+            throw new Error("Lỗi kết nối");
+        }
+
+        const data = await response.json();
+
+        // Nếu có dữ liệu trả về từ Sở và không có lỗi
+        if (data && !data.error) {
+            errorBox.style.display = "none";
+            resultBox.style.display = "block";
+            
+            // Đổ dữ liệu thật từ Sở ra màn hình điện thoại
+            // Lưu ý: Tên các biến (data.hoTen, data.toan...) phải khớp với API của Sở
+            document.getElementById("resTen").innerText = data.hoTen || data.HoTen || "Thí sinh";
+            document.getElementById("resSBD").innerText = data.soBaoDanh || data.sbd || sbd;
+            document.getElementById("resMaDD").innerText = data.maDinhDanh || "Đang cập nhật";
+            document.getElementById("resTruong").innerText = data.truongCu || "Đang cập nhật";
+            document.getElementById("resHoiDong").innerText = data.hoiDongThi || "Đang cập nhật";
+            document.getElementById("resToan").innerText = data.diemToan || data.toan || "0";
+            document.getElementById("resVan").innerText = data.diemVan || data.van || "0";
+            document.getElementById("resAnh").innerText = data.diemAnh || data.anh || "0";
+            document.getElementById("resChuyen").innerText = data.diemChuyen || "Không thi chuyên";
+        } else {
+            resultBox.style.display = "none";
+            errorBox.style.display = "block"; // Hiện lỗi màu đỏ
+        }
+    } catch (err) {
         resultBox.style.display = "none";
-        errorBox.style.display = "block";
+        errorBox.style.display = "block"; // Hiện lỗi màu đỏ nếu sập mạng
     }
 }
-</script>
 
-</body>
-</html>
