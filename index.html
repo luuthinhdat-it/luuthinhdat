@@ -1,74 +1,102 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Tra cứu điểm tuyển sinh 10</title>
-
-<style>
-body{
-  font-family:Arial;
-  padding:20px;
-}
-input,button{
-  width:100%;
-  padding:12px;
-  margin:8px 0;
-}
-.card{
-  background:#f5f5f5;
-  padding:15px;
-  border-radius:10px;
-  margin-top:10px;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tra Cứu Điểm Thi Lớp 10 Tây Ninh</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 15px; background-color: #f4f6f9; color: #333; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #0056b3; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 12px; background-color: #0056b3; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #004085; }
+        .result-box { margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 4px; background-color: #fafafa; display: none; }
+        .result-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 15px; }
+        .result-row:last-child { border-bottom: none; }
+        .label { font-weight: bold; color: #555; }
+        .value { text-align: right; color: #000; }
+        .error { color: red; text-align: center; margin-top: 15px; display: none; font-weight: bold; }
+        .loading { text-align: center; margin-top: 15px; display: none; color: #666; }
+    </style>
 </head>
 <body>
 
-<h2>Tra cứu điểm tuyển sinh lớp 10</h2>
+<div class="container">
+    <h2>Tuyển Sinh 10 Tây Ninh</h2>
+    <input type="text" id="searchKey" placeholder="Nhập Số báo danh của bạn...">
+    <button onclick="traCuuDiem()">Xem Kết Quả</button>
 
-<input id="sbd" placeholder="Nhập số báo danh">
+    <div id="loading" class="loading">⏳ Đang kết nối dữ liệu từ Sở...</div>
+    <div id="error" class="error">❌ Không tìm thấy SBD này hoặc lỗi kết nối hệ thống!</div>
 
-<button onclick="traCuu()">
-Tra cứu
-</button>
-
-<div id="kq"></div>
+    <div id="result" class="result-box">
+        <div class="result-row"><span class="label">Họ và Tên:</span> <span id="resTen" class="value" style="font-weight: bold;"></span></div>
+        <div class="result-row"><span class="label">Số báo danh:</span> <span id="resSBD" class="value"></span></div>
+        <div class="result-row"><span class="label">Mã định danh:</span> <span id="resMaDD" class="value"></span></div>
+        <div class="result-row"><span class="label">Trường THCS cũ:</span> <span id="resTruong" class="value"></span></div>
+        <div class="result-row"><span class="label">Hội đồng thi:</span> <span id="resHoiDong" class="value"></span></div>
+        <div class="result-row"><span class="label">Điểm Toán:</span> <span id="resToan" class="value"></span></div>
+        <div class="result-row"><span class="label">Điểm Ngữ Văn:</span> <span id="resVan" class="value"></span></div>
+        <div class="result-row"><span class="label">Điểm Tiếng Anh:</span> <span id="resAnh" class="value"></span></div>
+        <div class="result-row" style="background-color: #e6f3ff; margin-top: 5px; padding: 10px 5px; border-radius: 4px;">
+            <span class="label" style="color: #0056b3;">Điểm Môn Chuyên:</span> 
+            <span id="resChuyen" class="value" style="font-weight: bold; color: #0056b3;"></span>
+        </div>
+    </div>
+</div>
 
 <script>
+async function traCuuDiem() {
+    const sbd = document.getElementById("searchKey").value.trim();
+    const resultBox = document.getElementById("result");
+    const errorBox = document.getElementById("error");
+    const loadingBox = document.getElementById("loading");
 
-async function traCuu(){
+    if (!sbd) {
+        alert("Vui lòng nhập Số báo danh trước khi tìm kiếm!");
+        return;
+    }
 
- let sbd=document.getElementById("sbd").value;
+    // Ẩn các hộp thông báo cũ, hiện chữ đang tải
+    resultBox.style.display = "none";
+    errorBox.style.display = "none";
+    loadingBox.style.display = "block";
 
- // API của bạn
- let url=
- "https://your-api.onrender.com/diem?sbd="+sbd;
+    try {
+        // Gọi tới hàm trung gian (Serverless Function trên Vercel) đã kết nối ngầm với Sở
+        const response = await fetch(`/api/tracuu?sbd=${sbd}`);
+        const data = await response.json();
 
- try{
+        loadingBox.style.display = "none";
 
-   let res=await fetch(url);
-
-   let data=await res.json();
-
-   document.getElementById("kq").innerHTML=`
-   <div class="card">
-   <b>${data.hoten}</b><br>
-   Toán: ${data.toan}<br>
-   Văn: ${data.van}<br>
-   Anh: ${data.anh}
-   </div>
-   `;
-
- }catch(e){
-
-   document.getElementById("kq").innerHTML=
-   "Không kết nối được API";
-
- }
-
+        if (data && !data.error) {
+            errorBox.style.display = "none";
+            resultBox.style.display = "block";
+            
+            // Đổ chính xác các trường dữ liệu từ API ra màn hình điện thoại
+            // (Bạn có thể đổi tên các biến data.xxx tùy thuộc vào cấu trúc JSON thực tế trả về của Sở)
+            document.getElementById("resTen").innerText = data.hoTen || "Chưa cập nhật";
+            document.getElementById("resSBD").innerText = data.soBaoDanh || sbd;
+            document.getElementById("resMaDD").innerText = data.maDinhDanh || "Không có";
+            document.getElementById("resTruong").innerText = data.truongCu || "Chưa rõ";
+            document.getElementById("resHoiDong").innerText = data.hoiDongThi || "Chưa rõ";
+            document.getElementById("resToan").innerText = data.diemToan ?? "0";
+            document.getElementById("resVan").innerText = data.diemVan ?? "0";
+            document.getElementById("resAnh").innerText = data.diemAnh ?? "0";
+            
+            // Hiển thị điểm chuyên nếu có thi
+            document.getElementById("resChuyen").innerText = data.diemChuyen ? data.diemChuyen : "Không dự thi môn chuyên";
+        } else {
+            resultBox.style.display = "none";
+            errorBox.style.display = "block";
+        }
+    } catch (err) {
+        loadingBox.style.display = "none";
+        resultBox.style.display = "none";
+        errorBox.style.display = "block";
+    }
 }
-
 </script>
 
 </body>
