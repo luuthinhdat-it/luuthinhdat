@@ -42,3 +42,55 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: "Lỗi kết nối API: " + error.message });
     }
 }
+
+// api/tracuu.js
+export default async function handler(req, res) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+
+    const { sbd } = req.query;
+    if (!sbd) {
+        return res.status(400).json({ error: "Vui lòng nhập Số báo danh" });
+    }
+
+    try {
+        const baseUrl = 'https://tuyensinh.tayninh.edu.vn';
+        
+        // BƯỚC 1: Gọi vào trang chủ của Sở để nhặt Cookie bảo mật (Bypass bước đầu)
+        const initResponse = await fetch(baseUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+        });
+
+        // Lấy chuỗi Cookie do hệ thống Sở cấp phát cho thiết bị
+        const rawCookies = initResponse.headers.get('set-cookie') || '';
+        
+        // BƯỚC 2: Dùng chính Cookie đó để "đóng giả" người dùng thật gọi vào API điểm
+        const apiUrl = `${baseUrl}/api/tra-cuu/ket-qua?sbd=${sbd}`;
+        const response = await fetch(apiUrl, {
+            method: 'GET',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json, text/plain, */*',
+                'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Cookie': rawCookies, // Truyền Cookie bảo mật vừa nhặt được vào đây
+                'Referer': `${baseUrl}/`,
+                'Origin': baseUrl,
+                'Sec-Fetch-Mode': 'cors',
+                'Sec-Fetch-Site': 'same-origin'
+            }
+        });
+
+        if (!response.ok) {
+            return res.status(500).json({ error: "Tường lửa của Sở vẫn từ chối phiên kết nối này." });
+        }
+
+        const data = await response.json();
+        return res.status(200).json(data);
+
+    } catch (error) {
+        return res.status(500).json({ error: "Lỗi kết nối bypass: " + error.message });
+    }
+}
